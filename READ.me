@@ -1,0 +1,140 @@
+# Компилятор Паскаль-подобного языка на Python(Паскаль 2.0)
+
+Этот проект представляет собой учебный компилятор (интерпретатор) для простого, Паскаль-подобного языка программирования, написанный на Python. Он демонстрирует основные этапы компиляции, включая лексический анализ, синтаксический анализ (парсинг), генерацию промежуточного представления (IR) и выполнение этого IR с помощью интерпретатора. Также включен базовый многопроходный оптимизатор.
+
+## Возможности языка
+
+Текущая версия компилятора поддерживает следующие возможности языка:
+
+*   **Типы данных:**
+    *   `INTEGER` (целые числа)
+    *   `REAL` (числа с плавающей запятой)
+    *   `STRING` (строковые литералы для вывода)
+*   **Объявления:**
+    *   `PROGRAM <имя>;` - Заголовок программы (опционален в текущей реализации парсера).
+    *   `CONST` - Объявление именованных констант.
+    *   `VAR` - Объявление переменных.
+    *   `PROCEDURE <имя> (параметры);` - Объявление процедур с параметрами (передача по значению).
+*   **Основные операторы:**
+    *   `BEGIN ... END` - Составной оператор для группировки инструкций.
+    *   `:=` - Оператор присваивания.
+*   **Арифметические операции:** `+`, `-`, `*`, `/` (вещественное деление), `DIV` (целочисленное деление).
+*   **Логические операции:** `AND`, `OR`, `NOT`.
+*   **Операции сравнения:** `=`, `<>`, `<=`, `>=`. Операции `<` и `>` могут быть эмулированы через `NOT (... >= ...)` и `NOT (... <= ...)`.
+*   **Управляющие конструкции:**
+    *   `IF <условие> THEN <оператор> ELSE <оператор>;` (ветка `ELSE` необязательна).
+    *   `WHILE <условие> DO <оператор>;`
+*   **Ввод/Вывод:**
+    *   `READ(<переменная1>, <переменная2>, ...);` - Чтение значений для переменных с консоли.
+    *   `WRITE(<выражение1>, <выражение2>, ...);` - Вывод значений выражений.
+*   **Процедуры:**
+    *   Вызов процедур.
+    *   Рекурсивный вызов процедур.
+*   **Комментарии:**
+    *   Однострочные: `// ... до конца строки`
+    *   Многострочные (Паскаль-стиль): `{ ... }`
+
+## Структура проекта
+
+Проект разделен на следующие модули:
+
+1.  **`lexer.py`**: Лексический анализатор (токенизатор). Преобразует исходный код в поток токенов.
+2.  **`ast_nodes.py`**: Определения классов для узлов Абстрактного Синтаксического Дерева (AST).
+3.  **`parser.py`**: Синтаксический анализатор (парсер). Строит AST на основе потока токенов, проверяя соответствие грамматике.
+4.  **`intermediate_rep.py`**: Определения классов для инструкций Промежуточного Представления (IR) - в данном случае, простой трехадресный код.
+5.  **`ir_generator.py`**: Генератор IR. Обходит AST и генерирует последовательность IR-инструкций.
+6.  **`optimizer.py`**: Оптимизатор IR. Выполняет базовые оптимизации, такие как свертка констант и устранение мертвого кода.
+7.  **`interpreter.py`**: Интерпретатор IR. Выполняет IR-инструкции.
+8.  **`ast_printer.py`**: Вспомогательный модуль для красивой печати AST в консоль.
+9.  **`main.py`**: Главный модуль запуска. Связывает все компоненты вместе, управляет процессом компиляции и выполнения.
+
+## Грамматика (Упрощенная BNF)
+
+program ::= (PROGRAM ID SEMI)? block DOT
+
+block ::= declarations compound_statement
+
+declarations ::= (var_declaration_part | const_declaration_part | procedure_declaration_part)*
+
+var_declaration_part ::= VAR var_declaration (SEMI var_declaration)* SEMI?
+var_declaration ::= ID (COMMA ID)* COLON type_spec
+
+const_declaration_part ::= CONST const_declaration (SEMI const_declaration)* SEMI?
+const_declaration ::= ID EQUAL constant_value
+
+procedure_declaration_part ::= PROCEDURE ID (LPAREN formal_parameter_list RPAREN)? SEMI block SEMI
+formal_parameter_list ::= formal_parameters (SEMI formal_parameters)*
+formal_parameters ::= ID (COMMA ID)* COLON type_spec
+
+type_spec ::= INTEGER | REAL
+
+compound_statement ::= BEGIN statement_list END
+
+statement_list ::= statement (SEMI statement)* | empty
+
+statement ::= compound_statement
+            | assignment_statement
+            | procedure_call_statement
+            | if_statement
+            | while_statement
+            | read_statement
+            | write_statement
+            | empty
+
+assignment_statement ::= variable ASSIGN expr
+procedure_call_statement ::= ID LPAREN (expr (COMMA expr)*)? RPAREN
+
+if_statement ::= IF condition THEN statement (ELSE statement)?
+while_statement ::= WHILE condition DO statement
+read_statement ::= READ LPAREN variable (COMMA variable)* RPAREN
+write_statement ::= WRITE LPAREN expr (COMMA expr)* RPAREN
+
+condition ::= expr ((EQUAL | NOT_EQUAL | LESS_THAN | LESS_EQUAL | GREATER_THAN | GREATER_EQUAL) expr | (AND | OR) condition) | NOT condition | LPAREN condition RPAREN
+
+expr ::= term ((PLUS | MINUS | OR) term)*
+term ::= factor ((MUL | REAL_DIV | INTEGER_DIV | AND) factor)*
+factor ::= (PLUS | MINUS | NOT)? (
+              INTEGER_CONST
+            | REAL_CONST
+            | STRING_LITERAL
+            | LPAREN expr RPAREN
+            | variable
+           )
+
+variable ::= ID
+constant_value ::= INTEGER_CONST | REAL_CONST | STRING_LITERAL
+empty ::=
+
+Установка и Запуск
+Убедитесь, что у вас установлен Python (версия 3.7+ рекомендуется).
+Склонируйте репозиторий или скачайте все .py файлы в одну директорию.
+Создайте файл с исходным кодом на Паскаль-подобном языке (например, input.txt или my_program.pas).
+Запустите компилятор из командной строки:
+python main.py <путь_к_вашему_входному_файлу> <путь_к_вашему_выходному_файлу>
+
+Например:
+python main.py input.txt output.txt
+<путь_к_вашему_входному_файлу>: Файл с исходным кодом.
+<путь_к_вашему_выходному_файлу>: Файл, куда будет записан вывод команд WRITE вашей Паскаль-программы.
+Промежуточные стадии компиляции (сообщения о фазах, AST, IR) будут выведены в консоль.
+Пример кода на языке компилятора
+См. файл input.txt (используемый в тестах) для демонстрации большинства реализованных возможностей. Базовый пример:
+PROGRAM Example;
+CONST
+  PI = 3.14159;
+VAR
+  radius : REAL;
+  area : REAL;
+BEGIN
+  WRITE('Enter radius: ');
+  READ(radius);
+  area := PI * radius * radius;
+  WRITE('Area is: ', area, '\n'); // '\n' для новой строки
+END.
+
+
+## Автор
+
+[Константин/FunCthulhu]
+
+

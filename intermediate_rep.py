@@ -1,3 +1,5 @@
+# intermediate_rep.py
+
 class IRInstruction:
     def __str__(self):
         raise NotImplementedError
@@ -60,15 +62,22 @@ class CondJump(IRInstruction):
         return f"IF_FALSE {self.condition_var} JUMP {self.false_label_name}"
 
 class Call(IRInstruction):
-    def __init__(self, proc_name, args):
+    def __init__(self, proc_name, args, result_target=None):
         self.proc_name = proc_name
         self.args = args
+        self.result_target = result_target
     def __str__(self):
         args_str = ', '.join(map(str, self.args))
+        if self.result_target:
+            return f"{self.result_target} = CALL {self.proc_name}({args_str})"
         return f"CALL {self.proc_name}({args_str})"
 
 class Return(IRInstruction):
+    def __init__(self, value_source_operand=None):
+        self.value_source_operand = value_source_operand
     def __str__(self):
+        if self.value_source_operand:
+            return f"RETURN {self.value_source_operand}"
         return f"RETURN"
 
 class ReadIR(IRInstruction):
@@ -96,6 +105,7 @@ class ExitProc(IRInstruction):
         self.proc_name = proc_name
     def __str__(self):
         return f"EXIT_PROC {self.proc_name}"
+
 class NoOp(IRInstruction):
-        def __str__(self):
-            return "NOOP"
+    def __str__(self):
+        return "NOOP"

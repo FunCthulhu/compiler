@@ -1,0 +1,15 @@
+PROGRAM ProcWithParams;
+VAR global_a : INTEGER;
+PROCEDURE AddAndPrint(a : INTEGER; b : INTEGER);
+VAR sum : INTEGER;
+BEGIN
+  sum := a + b;
+  WRITE(a, ' + ', b, ' = ', sum, '\n');
+  global_a := a; // Демонстрация доступа к параметру
+END;
+BEGIN
+  global_a := 0;
+  AddAndPrint(5, 7);    // 12
+  AddAndPrint(10, -3);  // 7
+  WRITE('Global_a after call: ', global_a, '\n'); // Должно быть 10
+END.

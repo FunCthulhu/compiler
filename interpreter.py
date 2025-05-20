@@ -220,7 +220,7 @@ class Interpreter:
                             try: value_read_for_set = float(user_input_str)
                             except ValueError: raise InterpreterError("Invalid input: Expected integer or real.")
 
-                    except EOFError as e:
+                    except  EOFError as e:
                         raise InterpreterError(f"Input stream closed or cancelled: {e}")
                     finally:
                         sys.stdout = current_stdout
